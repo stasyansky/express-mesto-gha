@@ -11,18 +11,25 @@ module.exports.createCard = (req, res) => {
         message: 'Переданы некорректные данные при создании карточки',
       });
     }
-    return res.status(500).send({ message: 'На сервере произошла ошибка' });
+    return res.status(500).send({
+      message: 'На сервере произошла ошибка'
+    });
   });
 };
 
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then(cards => res.send(cards))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch(() => res.status(500).send({
+      message: 'На сервере произошла ошибка'
+    }));
 };
 
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
+    .orFail(
+      () => new Error('error id')
+    )
     .then(card => res.send(card))
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -30,7 +37,9 @@ module.exports.deleteCard = (req, res) => {
           message: 'Карточка с указанным id не найдена',
         });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+      return res.status(404).send({
+        message: 'На сервере произошла ошибка'
+      });
     });
 };
 
@@ -72,7 +81,9 @@ module.exports.dislikeCard = (req, res) => {
           message: 'Передан несуществующий id карточки',
         });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+      return res.status(500).send({
+        message: 'На сервере произошла ошибка'
+      });
     });
 }
 

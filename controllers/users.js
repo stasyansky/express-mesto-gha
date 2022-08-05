@@ -3,13 +3,15 @@ const User = require('../models/user');
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then(users => res.send(users))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch(() => res.status(500).send({
+      message: 'На сервере произошла ошибка'
+    }));
 };
 
 module.exports.getUser = (req, res) => {
   User.findById(req.params.userId)
     .orFail(
-      () => new Error(`Пользователь с таким id ${req.params.userId} не найден`)
+      () => new Error()
     )
     .then(user => res.send(user))
     .catch((err) => {
@@ -32,7 +34,9 @@ module.exports.createUser = (req, res) => {
           message: 'Переданы некорректные данные при создании пользователя',
         });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+      return res.status(500).send({
+        message: 'На сервере произошла ошибка'
+      });
     });
 };
 
@@ -56,7 +60,9 @@ module.exports.updateUser = (req, res) => {
           message: 'Пользователь с указанным id не найден',
         });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+      return res.status(500).send({
+        message: 'На сервере произошла ошибка'
+      });
     });
 }
 module.exports.updateAvatar = (req, res) => {
@@ -73,6 +79,8 @@ module.exports.updateAvatar = (req, res) => {
           message: 'Пользователь с указанным id не найден',
         });
       }
-      return res.status(500).send({ message: 'На сервере произошла ошибка' });
+      return res.status(500).send({
+        message: 'На сервере произошла ошибка'
+      });
     });
 }

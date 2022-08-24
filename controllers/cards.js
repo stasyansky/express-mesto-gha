@@ -1,53 +1,56 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/not-found-err');
+const ForbiddenError = require('../errors/forbidden-err');
+const BadRequestError = require('../errors/bad-request-err');
 
-module.exports.getCards = (req, res) => {
-  Card.find({})
-    .then((cards) => res.send(cards))
-    .catch((err) => res.status(500).json({
-      message: `На сервере произошла ошибка: ${err.message}`,
-    }));
+const errorCardHandler = (err, next) => {
+  if (err.message === 'ErrorId') {
+    next(new NotFoundError('Карточка с указанным id не найдена'));
+  }
+  if (err.name === 'ValidationError') {
+    next(new BadRequestError('Передан некорректный id карточки'));
+  } else {
+    next(err);
+  }
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.getCards = (req, res, next) => {
+  Card.find({})
+    .then((cards) => res.send(cards))
+    .catch(next);
+};
+
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
   Card.create({ name, link, owner })
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).json({
-          message: 'Переданы некорректные данные при создании карточки',
-        });
+        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
+      } else {
+        next(err);
       }
-      return res.status(500).json({
-        message: `На сервере произошла ошибка: ${err.message}`,
-      });
     });
 };
 
-module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
+module.exports.deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
     .orFail(
       new Error('ErrorId'),
     )
-    .then((card) => res.send(card))
-    .catch((err) => {
-      if (err.message === 'ErrorId') {
-        return res.status(404).json({
-          message: 'Карточка с указанным id не найдена',
-        });
-      } if (err.name === 'CastError') {
-        return res.status(400).json({
-          message: 'Передан некорректный id',
-        });
+    .then((card) => {
+      if (JSON.stringify(card.owner) !== JSON.stringify(req.user._id)) {
+        next(new ForbiddenError('Вы не можете удалить чужую карточку'));
       }
-      return res.status(500).json({
-        message: `На сервере произошла ошибка: ${err.message}`,
-      });
+      return Card.findByIdAndRemove(req.params.cardId).then(() => res.send({ message: 'Карточка удалена' }));
+    })
+    .catch((err) => {
+      errorCardHandler(err, next);
     });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -58,23 +61,11 @@ module.exports.likeCard = (req, res) => {
     )
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.message === 'ErrorId') {
-        return res.status(404).json({
-          message: 'Передан несуществующий id карточки',
-        });
-      }
-      if (err.name === 'CastError') {
-        return res.status(400).json({
-          message: 'Передан некорректный id',
-        });
-      }
-      return res.status(500).json({
-        message: `На сервере произошла ошибка: ${err.message}`,
-      });
+      errorCardHandler(err, next);
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -85,18 +76,6 @@ module.exports.dislikeCard = (req, res) => {
     )
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.message === 'ErrorId') {
-        return res.status(404).json({
-          message: 'Передан несуществующий id карточки',
-        });
-      }
-      if (err.name === 'CastError') {
-        return res.status(400).json({
-          message: 'Передан некорректный id',
-        });
-      }
-      return res.status(500).json({
-        message: `На сервере произошла ошибка: ${err.message}`,
-      });
+      errorCardHandler(err, next);
     });
 };

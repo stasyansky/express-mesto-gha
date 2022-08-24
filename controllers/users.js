@@ -39,14 +39,16 @@ module.exports.createUser = (req, res, next) => {
         next(new ConflictError('Пользователь с таким логином уже существует'));
       } else {
         bcrypt.hash(password, 10)
-          .then((hash) => User.create({
-            name,
-            about,
-            avatar,
-            email,
-            password: hash,
-          }))
-          .then(() => res.send(user));
+          .then((hash) => {
+            User.create({
+              name,
+              about,
+              avatar,
+              email,
+              password: hash,
+            })
+              .then((data) => res.send(data));
+          });
       }
     })
     .catch((err) => {

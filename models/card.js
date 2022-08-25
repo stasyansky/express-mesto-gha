@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { PATTERN_URL: pattern } = require('../utils/constants');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -12,7 +13,7 @@ const cardSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator(v) {
-        return new RegExp(process.env.PATTERN).test(v);
+        return new RegExp(pattern).test(v);
       },
     },
   },

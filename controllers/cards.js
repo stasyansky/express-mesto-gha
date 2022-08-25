@@ -4,9 +4,6 @@ const ForbiddenError = require('../errors/forbidden-err');
 const BadRequestError = require('../errors/bad-request-err');
 
 const errorCardHandler = (err, next) => {
-  if (err.message === 'ErrorId') {
-    next(new NotFoundError('Карточка с указанным id не найдена'));
-  }
   if (err.name === 'ValidationError') {
     next(new BadRequestError('Передан некорректный id карточки'));
   } else {
@@ -36,9 +33,7 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
-    .orFail(
-      new Error('ErrorId'),
-    )
+    .orFail(() => new NotFoundError('Карточка с указанным id не найдена'))
     .then((card) => {
       if (JSON.stringify(card.owner) !== JSON.stringify(req.user._id)) {
         next(new ForbiddenError('Вы не можете удалить чужую карточку'));
@@ -56,9 +51,7 @@ module.exports.likeCard = (req, res, next) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(
-      new Error('ErrorId'),
-    )
+    .orFail(() => new NotFoundError('Карточка с указанным id не найдена'))
     .then((card) => res.send(card))
     .catch((err) => {
       errorCardHandler(err, next);
@@ -71,9 +64,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .orFail(
-      new Error('ErrorId'),
-    )
+    .orFail(() => new NotFoundError('Карточка с указанным id не найдена'))
     .then((card) => res.send(card))
     .catch((err) => {
       errorCardHandler(err, next);

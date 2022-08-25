@@ -1,7 +1,6 @@
 const router = require('express').Router();
-
-const pattern = process.env.PATTERN;
 const { celebrate, Joi } = require('celebrate');
+const { PATTERN_URL: pattern } = require('../utils/constants');
 const {
   getCards,
   createCard,
